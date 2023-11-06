@@ -38,7 +38,7 @@ This application requires the following:
 Clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/[YourGitHubUsername]/FatigueDetectionSystem.git
+git clone https://github.com/Luchanaaaaa/Fatigue-Detection-System.git
 cd FatigueDetectionSystem
 ```
 Install the required dependencies:
