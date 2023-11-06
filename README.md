@@ -39,7 +39,7 @@ Clone the repository to your local machine:
 
 ```bash
 git clone https://github.com/Luchanaaaaa/Fatigue-Detection-System.git
-cd FatigueDetectionSystem
+cd Fatigue-Detection-System
 ```
 Install the required dependencies:
 ```
