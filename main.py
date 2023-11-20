@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 import numpy as np
 from PyQt5.QtCore import QUrl
-from eyetracking import LandmarkProcessor
+from facetracking import LandmarkProcessor
 
 
 
@@ -56,12 +56,13 @@ class VideoWindow(QWidget):
         self.EAR_THRESHOLD_ACTIVE = 0.28
         self.EAR_THRESHOLD_FATIGUE = 0.27
         self.EAR_THRESHOLD_SLEEP = 0.17
-        self.EAR_CONSEC_FRAMES = 60     # 60 frames = 2 seconds
+        self.EAR_CONSEC_FRAMES = 60     # TODO: 60 frames = 2 seconds
         self.EAR_frame_counter = 0
 
-        # EAR history
-        self.EAR_history = []
-        self.HISTORY_LENGTH = 10
+        # MAR parameters
+        self.MAR_THRESHOLD_YAWN = 0.5  # TODO:  MAR threshold for yawning
+        self.MAR_CONSEC_FRAMES = 60  # TODO： Number of consecutive frames the MAR must be below the threshold
+        self.MAR_frame_counter = 0
 
         # Alarm player
         self.player = QMediaPlayer()
@@ -79,29 +80,29 @@ class VideoWindow(QWidget):
                 x, y, w, h = (face.left(), face.top(), face.width(), face.height())
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-
-
                 landmarks = self.predictor(frame, face)
                 processor = LandmarkProcessor(landmarks)
                 smooth_ear = processor.calculate_ear()
+                smooth_mar = processor.calculate_mouth()
 
-
-                # Update the status label based on the average EAR
+                # Update the status label based on the average EAR and MAR
+                print(smooth_ear, "\n")
                 if smooth_ear >= self.EAR_THRESHOLD_ACTIVE:
-                    self.EAR_frame_counter = 0
                     self.status_label.setStyleSheet("background-color: green")  # Set status to green for active state
-                elif self.EAR_THRESHOLD_SLEEP < smooth_ear < self.EAR_THRESHOLD_FATIGUE:
+                elif self.EAR_THRESHOLD_SLEEP < smooth_ear < self.EAR_THRESHOLD_FATIGUE and smooth_mar >= self.MAR_THRESHOLD_YAWN:
                     self.EAR_frame_counter += 1
-                    self.status_label.setStyleSheet("background-color: yellow")  # Set status to yellow for fatigue state
-                    if self.EAR_frame_counter >= self.EAR_CONSEC_FRAMES:
+                    self.status_label.setStyleSheet(
+                        "background-color: yellow")  # Set status to yellow for fatigue state
+                    if self.EAR_frame_counter >= self.EAR_CONSEC_FRAMES or self.MAR_frame_counter >= self.MAR_CONSEC_FRAMES:
                         self.player.play()  # Play warning sound
-                        QMessageBox.warning(self, "Warning", "Fatigue detected! Please take a rest!")
-                        self.EAR_frame_counter = 0  # Reset the counter
+                        QMessageBox.warning(self, "Warning", "Fatigue or Yawning detected! Please take a rest!")
+                        self.EAR_frame_counter = 0  # Reset the EAR counter
+                        self.MAR_frame_counter = 0  # Reset the MAR counter
                 elif smooth_ear <= self.EAR_THRESHOLD_SLEEP:
                     self.status_label.setStyleSheet("background-color: red")  # Set status to red for sleep state
                     self.player.play()
                     QMessageBox.critical(self, "Critical Warning", "You might have fallen asleep!")
-                    self.EAR_frame_counter = 0  # Reset the counter
+                    self.EAR_frame_counter = 0  # Reset the EAR counter
 
 
                 for n in range(0, 68):
