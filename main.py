@@ -64,6 +64,17 @@ class VideoWindow(QWidget):
         self.MAR_CONSEC_FRAMES = 60  # TODO： Number of consecutive frames the MAR must be below the threshold
         self.MAR_frame_counter = 0
 
+        # PERCLOS parameters
+        self.PERCLOS_THRESHOLD = 15.0
+        self.PERCLOS_CONSEC_FRAMES = 60
+        self.PERCLOS_frame_counter = 0
+
+        # EAR history
+        self.EAR_history = []
+
+        # MAR history
+        self.MAR_history = []
+
         # Alarm player
         self.player = QMediaPlayer()
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile("alert.mp3")))
@@ -84,20 +95,22 @@ class VideoWindow(QWidget):
                 processor = LandmarkProcessor(landmarks)
                 smooth_ear = processor.calculate_ear()
                 smooth_mar = processor.calculate_mouth()
+                perclos = self.calculate_perclos(smooth_ear)
 
-                # Update the status label based on the average EAR and MAR
-                print(smooth_ear, "\n")
+                # Update the status label based on the average EAR, MAR, and PERCLOS
+                print(smooth_ear, smooth_mar, perclos, "\n")
                 if smooth_ear >= self.EAR_THRESHOLD_ACTIVE:
                     self.status_label.setStyleSheet("background-color: green")  # Set status to green for active state
-                elif self.EAR_THRESHOLD_SLEEP < smooth_ear < self.EAR_THRESHOLD_FATIGUE and smooth_mar >= self.MAR_THRESHOLD_YAWN:
+                elif (self.EAR_THRESHOLD_SLEEP < smooth_ear < self.EAR_THRESHOLD_FATIGUE and smooth_mar >= self.MAR_THRESHOLD_YAWN and perclos < self.PERCLOS_THRESHOLD):
                     self.EAR_frame_counter += 1
                     self.status_label.setStyleSheet(
                         "background-color: yellow")  # Set status to yellow for fatigue state
-                    if self.EAR_frame_counter >= self.EAR_CONSEC_FRAMES or self.MAR_frame_counter >= self.MAR_CONSEC_FRAMES:
+                    if (self.EAR_frame_counter >= self.EAR_CONSEC_FRAMES or self.MAR_frame_counter >= self.MAR_CONSEC_FRAMES or self.PERCLOS_frame_counter >= self.PERCLOS_CONSEC_FRAMES):
                         self.player.play()  # Play warning sound
                         QMessageBox.warning(self, "Warning", "Fatigue or Yawning detected! Please take a rest!")
                         self.EAR_frame_counter = 0  # Reset the EAR counter
                         self.MAR_frame_counter = 0  # Reset the MAR counter
+                        self.PERCLOS_frame_counter = 0 #Reset the PERCLOS counter
                 elif smooth_ear <= self.EAR_THRESHOLD_SLEEP:
                     self.status_label.setStyleSheet("background-color: red")  # Set status to red for sleep state
                     self.player.play()
