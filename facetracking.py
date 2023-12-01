@@ -60,3 +60,8 @@ class LandmarkProcessor:
             return perclos
         else:
             return 0.0
+    def get_drowsiness_status(perclos):
+        if perclos < 0.075:
+            return "Non-Drowsy"
+        else:
+            return "Drowsy"
