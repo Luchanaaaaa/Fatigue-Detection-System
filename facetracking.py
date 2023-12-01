@@ -51,3 +51,12 @@ class LandmarkProcessor:
 
         smooth_mar = sum(self.MAR_history) / len(self.MAR_history)
         return smooth_mar
+
+    def calculate_perclos(self):
+        # Calculate the percentage of eye closure over the last frames
+        if len(self.EAR_history) >= self.HISTORY_LENGTH:
+            closed_frames = sum(1 for ear in self.EAR_history[-self.HISTORY_LENGTH:] if ear < self.EAR_THRESHOLD)
+            perclos = (closed_frames / self.HISTORY_LENGTH) * 100
+            return perclos
+        else:
+            return 0.0
